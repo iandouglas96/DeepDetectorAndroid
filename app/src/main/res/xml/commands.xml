@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<apkInfo>
+    <shortName>DeepDetector</shortName>
+    <primary>false</primary> <!-- Required -->
+    <commands>
+        <command name="Turn on detector"
+             syntax="{&quot;name&quot;: &quot;turnOnDetector&quot;}" />
+        <command name="Turn off detector"
+             syntax="{&quot;name&quot;: &quot;turnOffDetector&quot;}" />
+    </commands>
+</apkInfo>

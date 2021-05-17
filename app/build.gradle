@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
+
+    defaultConfig {
+        applicationId 'com.iandm.astrobee.deepdetector'
+        minSdkVersion 25
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    buildFeatures {
+        mlModelBinding true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation "androidx.annotation:annotation:1.0.0"
+    implementation files('/home/ian/nasa_share/astrobee_android/guest_science/library/build/outputs/aar/guest_science_library.aar')
+    implementation('org.ros.rosjava_core:rosjava:0.3.5') {
+        exclude group: 'xml-apis'
+        exclude group: 'junit'
+    }
+    implementation 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
+    implementation 'org.ros.rosjava_bootstrap:message_generation:(0.2, 0.3]'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.1.0-rc1'
+    implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc1'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+}
