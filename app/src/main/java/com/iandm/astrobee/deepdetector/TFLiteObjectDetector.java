@@ -36,19 +36,11 @@ public class TFLiteObjectDetector {
         }
     }
 
-    public void Infer(Bitmap img) {
-        Bitmap scaled_img = Bitmap.createScaledBitmap(img, 300, 300, true);
-        TensorImage tf_img = TensorImage.fromBitmap(scaled_img);
-        Detect.Outputs outputs = model.process(tf_img);
+    public DetectionSet Infer(Bitmap img) {
+        Bitmap scaledImg = Bitmap.createScaledBitmap(img, 300, 300, true);
+        TensorImage tfImg = TensorImage.fromBitmap(scaledImg);
+        Detect.Outputs outputs = model.process(tfImg);
 
-        Log.i(DeepDetector.TAG, "Detections:");
-        for (Detect.DetectionResult detectionResult : outputs.getDetectionResultList()) {
-            // Gets result from DetectionResult.
-            RectF location = detectionResult.getLocationAsRectF();
-            String category = detectionResult.getCategoryAsString();
-            float score = detectionResult.getScoreAsFloat();
-
-            Log.i(DeepDetector.TAG, category);
-        }
+        return new DetectionSet(outputs.getDetectionResultList());
     }
 }

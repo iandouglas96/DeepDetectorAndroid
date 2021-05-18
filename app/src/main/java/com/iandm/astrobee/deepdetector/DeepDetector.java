@@ -51,7 +51,6 @@ public class DeepDetector extends AppCompatActivity {
         @Override
         public void callback(Bitmap img) {
             lastImg = img;
-            detector.Infer(lastImg);
 
             //Sent Intent to tell main thread that we got new image
             Intent intent = new Intent();
@@ -63,8 +62,11 @@ public class DeepDetector extends AppCompatActivity {
     private BroadcastReceiver processNewImage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            DetectionSet detectionSet = detector.Infer(lastImg);
+            Bitmap annotatedImg = detectionSet.visualize(lastImg);
+
             //Have to do this in the main thread
-            imageView.setImageBitmap(lastImg);
+            imageView.setImageBitmap(annotatedImg);
         }
     };
 
