@@ -35,10 +35,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation "androidx.annotation:annotation:1.0.0"
     implementation files('/home/ian/nasa_share/astrobee_android/guest_science/library/build/outputs/aar/guest_science_library.aar')
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation('org.ros.rosjava_core:rosjava:0.3.5') {
         exclude group: 'xml-apis'
         exclude group: 'junit'
     }
+    implementation 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
     implementation 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
     implementation 'org.ros.rosjava_bootstrap:message_generation:(0.2, 0.3]'
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0-rc1'

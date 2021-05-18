@@ -12,18 +12,19 @@ import org.ros.namespace.NameResolver;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
 import org.ros.node.NodeMain;
+import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.message.MessageListener;
-
-import sensor_msgs.Image;
 
 public class ROSInterface implements NodeMain {
     private ConnectedNode connectedNode;
     private Subscriber<sensor_msgs.Image> imgSub;
+    private Publisher<vision_msgs.Detection2DArray> detectionPub;
+    private Publisher<sensor_msgs.Image> detectionVizPub;
     private DeepDetectorCallback imgReadyCb;
 
     private MessageListener<sensor_msgs.Image> imageMessageListener =
-            new MessageListener<Image>() {
+            new MessageListener<sensor_msgs.Image>() {
         @Override
         public void onNewMessage(sensor_msgs.Image img_msg) {
             Log.i(DeepDetector.TAG, "Image Received");
@@ -58,6 +59,12 @@ public class ROSInterface implements NodeMain {
         imgReadyCb = cb;
     }
 
+    public void publishDetections(DetectionSet detections) {
+        vision_msgs.Detection2DArray detMsg = detectionPub.newMessage();
+        detections.exportROS(detMsg);
+        detectionPub.publish(detMsg);
+    }
+
     @Override
     public GraphName getDefaultNodeName() {
         return GraphName.of("deep_detector_node");
@@ -72,6 +79,10 @@ public class ROSInterface implements NodeMain {
         imgSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav"),
                 sensor_msgs.Image._TYPE);
         imgSub.addMessageListener(imageMessageListener);
+        detectionPub = connectedNode.newPublisher(resolver.resolve("detections"),
+                vision_msgs.Detection2DArray._TYPE);
+        detectionVizPub = connectedNode.newPublisher(resolver.resolve("detections_viz"),
+                sensor_msgs.Image._TYPE);
     }
 
     @Override

@@ -63,9 +63,10 @@ public class DeepDetector extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             DetectionSet detectionSet = detector.Infer(lastImg);
-            Bitmap annotatedImg = detectionSet.visualize(lastImg);
+            rosInterface.publishDetections(detectionSet);
 
-            //Have to do this in the main thread
+            //In-app visualization
+            Bitmap annotatedImg = detectionSet.visualize(lastImg);
             imageView.setImageBitmap(annotatedImg);
         }
     };

@@ -60,4 +60,8 @@ public class DetectionSet {
 
         return annotated_img;
     }
+
+    public void exportROS(vision_msgs.Detection2DArray msg) {
+
+    }
 }
