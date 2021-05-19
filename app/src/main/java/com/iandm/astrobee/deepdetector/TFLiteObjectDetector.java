@@ -41,6 +41,6 @@ public class TFLiteObjectDetector {
         TensorImage tfImg = TensorImage.fromBitmap(scaledImg);
         Detect.Outputs outputs = model.process(tfImg);
 
-        return new DetectionSet(outputs.getDetectionResultList());
+        return new DetectionSet(outputs.getDetectionResultList(), img);
     }
 }

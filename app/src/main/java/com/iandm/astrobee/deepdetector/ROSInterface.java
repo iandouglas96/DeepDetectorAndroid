@@ -7,6 +7,7 @@ import android.util.Log;
 import android.util.TimingLogger;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
 import org.ros.node.ConnectedNode;
@@ -15,6 +16,10 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.message.MessageListener;
+
+import java.io.IOException;
+
+import vision_msgs.Detection2DArray;
 
 public class ROSInterface implements NodeMain {
     private ConnectedNode connectedNode;
@@ -38,6 +43,7 @@ public class ROSInterface implements NodeMain {
                 int w = img.getWidth();
                 int h = img.getHeight();
                 byte[] bgr = new byte[3];
+                //Assume BGR8.  Need to have a switch here eventually depending on format
                 for (int y = 0; y < h; y++) {
                     for (int x = 0; x < w; x++) {
                         img_data.getBytes(ind, bgr, 0, 3);
@@ -48,7 +54,8 @@ public class ROSInterface implements NodeMain {
                 }
                 img.setPixels(pixels, 0, w, 0, 0, w, h);
 
-                imgReadyCb.callback(img);
+                long timeNs = img_msg.getHeader().getStamp().totalNsecs();
+                imgReadyCb.callback(img, timeNs);
             } catch (IndexOutOfBoundsException e) {
                 Log.i(DeepDetector.TAG, "Mismatch in expected image data");
             }
@@ -59,10 +66,21 @@ public class ROSInterface implements NodeMain {
         imgReadyCb = cb;
     }
 
-    public void publishDetections(DetectionSet detections) {
-        vision_msgs.Detection2DArray detMsg = detectionPub.newMessage();
-        detections.exportROS(detMsg);
+    public void publishDetections(DetectionSet detections, long timeNs) {
+        Time stamp = Time.fromNano(timeNs);
+        vision_msgs.Detection2DArray detMsg =
+                detections.exportROS(connectedNode.getTopicMessageFactory());
+        detMsg.getHeader().setStamp(stamp);
         detectionPub.publish(detMsg);
+
+        try {
+            sensor_msgs.Image detVizMsg =
+                    detections.exportVizROS(connectedNode.getTopicMessageFactory());
+            detVizMsg.getHeader().setStamp(stamp);
+            detectionVizPub.publish(detVizMsg);
+        } catch (IOException e) {
+            Log.i(DeepDetector.TAG, "Failed to export visualization image");
+        }
     }
 
     @Override

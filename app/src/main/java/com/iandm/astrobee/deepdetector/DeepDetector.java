@@ -22,7 +22,7 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 interface DeepDetectorCallback {
-    void callback(Bitmap img);
+    void callback(Bitmap img, long timeNs);
 }
 
 public class DeepDetector extends AppCompatActivity {
@@ -34,6 +34,7 @@ public class DeepDetector extends AppCompatActivity {
 
     private ImageView imageView;
     private Bitmap lastImg;
+    private long lastTimeNs;
 
     public static final String TAG =
             "deep_det";
@@ -49,8 +50,9 @@ public class DeepDetector extends AppCompatActivity {
 
     private DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
         @Override
-        public void callback(Bitmap img) {
+        public void callback(Bitmap img, long timeNs) {
             lastImg = img;
+            lastTimeNs = timeNs;
 
             //Sent Intent to tell main thread that we got new image
             Intent intent = new Intent();
@@ -63,10 +65,10 @@ public class DeepDetector extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             DetectionSet detectionSet = detector.Infer(lastImg);
-            rosInterface.publishDetections(detectionSet);
+            rosInterface.publishDetections(detectionSet, lastTimeNs);
 
             //In-app visualization
-            Bitmap annotatedImg = detectionSet.visualize(lastImg);
+            Bitmap annotatedImg = detectionSet.visualize();
             imageView.setImageBitmap(annotatedImg);
         }
     };

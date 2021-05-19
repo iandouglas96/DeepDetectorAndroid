@@ -41,7 +41,8 @@ dependencies {
         exclude group: 'junit'
     }
     implementation 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
-    implementation 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
+    implementation 'org.ros.rosjava_messages:std_msgs:0.5.11'
+    implementation 'org.ros.rosjava_messages:geometry_msgs:1.12.7'
     implementation 'org.ros.rosjava_bootstrap:message_generation:(0.2, 0.3]'
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0-rc1'
     implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc1'
