@@ -52,13 +52,21 @@ public class StartDeepDetector extends StartGuestScienceService {
 
     @Override
     public void onGuestScienceStart() {
-        Log.i("deep_det", "Started Module");
+        Intent deepDetectorService = new Intent(this, DeepDetector.class);
+        deepDetectorService.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startService(deepDetectorService);
+
+        Log.i("deep_det", "Started Detector Service");
         sendStarted("info");
     }
 
     @Override
     public void onGuestScienceStop() {
-        Log.i("deep_det", "Stopped Module");
+        Intent intent = new Intent(this, DeepDetector.class);
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+        stopService(intent);
+
+        Log.i("deep_det", "Stopped Detector Service");
         sendStopped("info");
         terminate();
     }

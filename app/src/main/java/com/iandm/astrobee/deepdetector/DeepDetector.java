@@ -1,5 +1,6 @@
 package com.iandm.astrobee.deepdetector;
 
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.ImageView;
@@ -25,7 +27,7 @@ interface DeepDetectorCallback {
     void callback(Bitmap img, long timeNs);
 }
 
-public class DeepDetector extends AppCompatActivity {
+public class DeepDetector extends Service {
     private NodeMainExecutor nodeMainExecutor = null;
     private NodeConfiguration nodeConfiguration = null;
     public ROSInterface rosInterface = null;
@@ -35,6 +37,8 @@ public class DeepDetector extends AppCompatActivity {
     private ImageView imageView;
     private Bitmap lastImg;
     private long lastTimeNs;
+
+    private boolean doInfer = true;
 
     public static final String TAG =
             "deep_det";
@@ -48,48 +52,73 @@ public class DeepDetector extends AppCompatActivity {
     public static final String IMAGE_RECEIVED =
             "com.iandm.astrobee.deepdetector.IMAGE_RECEIVED";
 
-    private DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
+    private final DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
         @Override
         public void callback(Bitmap img, long timeNs) {
             lastImg = img;
             lastTimeNs = timeNs;
 
             //Sent Intent to tell main thread that we got new image
-            Intent intent = new Intent();
-            intent.setAction(IMAGE_RECEIVED);
-            sendBroadcast(intent);
+            if (doInfer) {
+                Intent intent = new Intent();
+                intent.setAction(IMAGE_RECEIVED);
+                sendBroadcast(intent);
+            }
         }
     };
 
-    private BroadcastReceiver processNewImage = new BroadcastReceiver() {
+    private final BroadcastReceiver processNewImage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             DetectionSet detectionSet = detector.Infer(lastImg);
             rosInterface.publishDetections(detectionSet, lastTimeNs);
 
             //In-app visualization
-            Bitmap annotatedImg = detectionSet.visualize();
-            imageView.setImageBitmap(annotatedImg);
+            //Bitmap annotatedImg = detectionSet.visualize();
+            //imageView.setImageBitmap(annotatedImg);
+        }
+    };
+
+    private final BroadcastReceiver processTurnOnDetection = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "Turning on detector");
+            doInfer = true;
+        }
+    };
+
+    private final BroadcastReceiver processTurnOffDetection = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "Turning off detector");
+            doInfer = false;
         }
     };
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(null);
+    public void onCreate() {
+        super.onCreate();
 
         //Initialize model
         detector = new TFLiteObjectDetector(this);
 
         //GUI stuff
         registerReceiver(processNewImage, new IntentFilter(IMAGE_RECEIVED));
-        setContentView(R.layout.image_preview);
-        imageView = (ImageView)findViewById(R.id.imageView);
+        registerReceiver(processTurnOnDetection, new IntentFilter(TURN_ON_DETECTOR));
+        registerReceiver(processTurnOffDetection, new IntentFilter(TURN_OFF_DETECTOR));
+        //setContentView(R.layout.image_preview);
+        //imageView = (ImageView)findViewById(R.id.imageView);
 
         startROS();
     }
 
     @Override
-    protected void onDestroy() {
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
         stopROS();
         super.onDestroy();
     }

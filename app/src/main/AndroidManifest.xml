@@ -32,6 +32,10 @@
         <service android:name=".StartDeepDetector" android:exported="true">
             <meta-data android:name="Start Service" android:value="true" />
         </service>
+
+        <service android:name=".DeepDetector" android:exported="true">
+            <meta-data android:name="Detector Service" android:value="true" />
+        </service>
     </application>
 
 </manifest>

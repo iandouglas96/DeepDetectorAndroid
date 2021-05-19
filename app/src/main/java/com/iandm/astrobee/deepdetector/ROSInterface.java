@@ -43,14 +43,28 @@ public class ROSInterface implements NodeMain {
                 int w = img.getWidth();
                 int h = img.getHeight();
                 byte[] bgr = new byte[3];
-                //Assume BGR8.  Need to have a switch here eventually depending on format
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        img_data.getBytes(ind, bgr, 0, 3);
-                        ind += 3;
-                        pixels[y*w + x] = Color.argb(255,
-                                bgr[2]&0xff, bgr[1]&0xff, bgr[0]&0xff);
+
+                if (img_msg.getEncoding().equals("bgr8")) {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            img_data.getBytes(ind, bgr, 0, 3);
+                            ind += 3;
+                            pixels[y * w + x] = Color.argb(255,
+                                    bgr[2] & 0xff, bgr[1] & 0xff, bgr[0] & 0xff);
+                        }
                     }
+                } else if (img_msg.getEncoding().equals("mono8")) {
+                    for (int y = 0; y < h; y++) {
+                        for (int x = 0; x < w; x++) {
+                            img_data.getBytes(ind, bgr, 0, 1);
+                            ind += 1;
+                            pixels[y * w + x] = Color.argb(255,
+                                    bgr[0] & 0xff, bgr[0] & 0xff, bgr[0] & 0xff);
+                        }
+                    }
+                } else {
+                    Log.i(DeepDetector.TAG, "Unsupported image format: " + img_msg.getEncoding());
+                    return;
                 }
                 img.setPixels(pixels, 0, w, 0, 0, w, h);
 
