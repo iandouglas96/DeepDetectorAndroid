@@ -36,7 +36,6 @@ public class ROSInterface implements NodeMain {
             Bitmap img = Bitmap.createBitmap(img_msg.getWidth(),
                     img_msg.getHeight(), Bitmap.Config.ARGB_8888);
             ChannelBuffer img_data = img_msg.getData();
-            int ind = 0;
             try {
                 long startTime = System.nanoTime();
                 //Copy data from image message buffer to Bitmap object for java
@@ -47,22 +46,17 @@ public class ROSInterface implements NodeMain {
                 if (img_msg.getEncoding().equals("bgr8")) {
                     byte[] byte_buf = new byte[pixels.length*3];
                     img_data.getBytes(0, byte_buf, 0, byte_buf.length);
-                    for (int y = 0; y < h; y++) {
-                        for (int x = 0; x < w; x++) {
-                            pixels[y * w + x] = Color.rgb(
-                                    byte_buf[ind+2] & 0xff, byte_buf[ind+1] & 0xff, byte_buf[ind] & 0xff);
-                            ind += 3;
-                        }
+                    for (int ind=0; ind<pixels.length; ind++) {
+                        int byte_ind = ind*3;
+                        pixels[ind] = Color.rgb(
+                                byte_buf[byte_ind+2] & 0xff, byte_buf[byte_ind+1] & 0xff, byte_buf[byte_ind] & 0xff);
                     }
                 } else if (img_msg.getEncoding().equals("mono8")) {
                     byte[] byte_buf = new byte[pixels.length];
                     img_data.getBytes(0, byte_buf, 0, byte_buf.length);
-                    for (int y = 0; y < h; y++) {
-                        for (int x = 0; x < w; x++) {
-                            pixels[y * w + x] = Color.rgb(
-                                    byte_buf[ind] & 0xff, byte_buf[ind] & 0xff, byte_buf[ind] & 0xff);
-                            ind += 1;
-                        }
+                    for (int ind=0; ind<pixels.length; ind++) {
+                        pixels[ind] = Color.rgb(
+                                byte_buf[ind] & 0xff, byte_buf[ind] & 0xff, byte_buf[ind] & 0xff);
                     }
                 } else {
                     Log.i(DeepDetector.TAG, "Unsupported image format: " + img_msg.getEncoding());
