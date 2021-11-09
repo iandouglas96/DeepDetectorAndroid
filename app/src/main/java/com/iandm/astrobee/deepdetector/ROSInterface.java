@@ -43,24 +43,25 @@ public class ROSInterface implements NodeMain {
                 int[] pixels = new int[img.getHeight()*img.getWidth()];
                 int w = img.getWidth();
                 int h = img.getHeight();
-                byte[] bgr = new byte[3];
 
                 if (img_msg.getEncoding().equals("bgr8")) {
+                    byte[] byte_buf = new byte[pixels.length*3];
+                    img_data.getBytes(0, byte_buf, 0, byte_buf.length);
                     for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
-                            img_data.getBytes(ind, bgr, 0, 3);
-                            ind += 3;
                             pixels[y * w + x] = Color.rgb(
-                                    bgr[2] & 0xff, bgr[1] & 0xff, bgr[0] & 0xff);
+                                    byte_buf[ind+2] & 0xff, byte_buf[ind+1] & 0xff, byte_buf[ind] & 0xff);
+                            ind += 3;
                         }
                     }
                 } else if (img_msg.getEncoding().equals("mono8")) {
+                    byte[] byte_buf = new byte[pixels.length];
+                    img_data.getBytes(0, byte_buf, 0, byte_buf.length);
                     for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
-                            img_data.getBytes(ind, bgr, 0, 1);
-                            ind += 1;
                             pixels[y * w + x] = Color.rgb(
-                                    bgr[0] & 0xff, bgr[0] & 0xff, bgr[0] & 0xff);
+                                    byte_buf[ind] & 0xff, byte_buf[ind] & 0xff, byte_buf[ind] & 0xff);
+                            ind += 1;
                         }
                     }
                 } else {
@@ -73,7 +74,8 @@ public class ROSInterface implements NodeMain {
 
                 long timeNs = img_msg.getHeader().getStamp().totalNsecs();
                 imgReadyCb.callback(img, timeNs);
-            } catch (IndexOutOfBoundsException e) {
+            }
+            catch (IndexOutOfBoundsException e) {
                 Log.i(DeepDetector.TAG, "Mismatch in expected image data");
             }
         }
