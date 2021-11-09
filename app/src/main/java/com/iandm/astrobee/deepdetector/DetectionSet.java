@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.iandm.astrobee.deepdetector.ml.Detect;
+import com.iandm.astrobee.deepdetector.ml.IssModel;
 
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.ros.internal.message.MessageBuffers;
@@ -56,22 +57,22 @@ public class DetectionSet {
     private final List<Detection> detectionsFiltered;
     private final Bitmap annotatedImg;
 
-    public DetectionSet(List<Detect.DetectionResult> detections, Bitmap img) {
+    public DetectionSet(List<IssModel.DetectionResult> detections, Bitmap img) {
         annotatedImg = img.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(annotatedImg);
         detectionsFiltered = new ArrayList<>();
 
-        for (Detect.DetectionResult d : detections) {
+        for (IssModel.DetectionResult d : detections) {
             RectF location = d.getLocationAsRectF();
             String category = d.getCategoryAsString();
             float score = d.getScoreAsFloat();
 
             if (score > 0.5 && (location.bottom-location.top)*(location.right-location.left) > 50) {
                 //Rescale
-                location.bottom *= img.getHeight()/300.;
-                location.top *= img.getHeight()/300.;
-                location.left *= img.getWidth()/300.;
-                location.right *= img.getWidth()/300.;
+                location.bottom *= img.getHeight()/448.;
+                location.top *= img.getHeight()/448.;
+                location.left *= img.getWidth()/448.;
+                location.right *= img.getWidth()/448.;
 
                 if (paletteLut.get(category) == null) {
                     paletteLut.put(category, nextPaletteInd);

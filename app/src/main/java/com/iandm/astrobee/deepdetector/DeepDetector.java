@@ -11,7 +11,10 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.ImageView;
@@ -34,10 +37,6 @@ public class DeepDetector extends Service {
 
     private TFLiteObjectDetector detector;
 
-    private ImageView imageView;
-    private Bitmap lastImg;
-    private long lastTimeNs;
-
     private boolean doInfer = true;
 
     public static final String TAG =
@@ -55,27 +54,14 @@ public class DeepDetector extends Service {
     private final DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
         @Override
         public void callback(Bitmap img, long timeNs) {
-            lastImg = img;
-            lastTimeNs = timeNs;
-
-            //Sent Intent to tell main thread that we got new image
             if (doInfer) {
-                Intent intent = new Intent();
-                intent.setAction(IMAGE_RECEIVED);
-                sendBroadcast(intent);
+                long startTime = System.nanoTime();
+                DetectionSet detectionSet = detector.Infer(img);
+                long endTime = System.nanoTime();
+                Log.i(DeepDetector.TAG, String.format("Inference proc: %f sec", (endTime - startTime) / 1.e9));
+
+                rosInterface.publishDetections(detectionSet, timeNs);
             }
-        }
-    };
-
-    private final BroadcastReceiver processNewImage = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            DetectionSet detectionSet = detector.Infer(lastImg);
-            rosInterface.publishDetections(detectionSet, lastTimeNs);
-
-            //In-app visualization
-            //Bitmap annotatedImg = detectionSet.visualize();
-            //imageView.setImageBitmap(annotatedImg);
         }
     };
 
@@ -102,12 +88,8 @@ public class DeepDetector extends Service {
         //Initialize model
         detector = new TFLiteObjectDetector(this);
 
-        //GUI stuff
-        registerReceiver(processNewImage, new IntentFilter(IMAGE_RECEIVED));
         registerReceiver(processTurnOnDetection, new IntentFilter(TURN_ON_DETECTOR));
         registerReceiver(processTurnOffDetection, new IntentFilter(TURN_OFF_DETECTOR));
-        //setContentView(R.layout.image_preview);
-        //imageView = (ImageView)findViewById(R.id.imageView);
 
         startROS();
     }

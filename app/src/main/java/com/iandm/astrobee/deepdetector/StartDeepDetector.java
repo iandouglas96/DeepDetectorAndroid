@@ -57,6 +57,8 @@ public class StartDeepDetector extends StartGuestScienceService {
         startService(deepDetectorService);
 
         Log.i("deep_det", "Started Detector Service");
+        //Added to verify we are running the version we think we are
+        Log.i("deep_det", "v.0.1-dev");
         sendStarted("info");
     }
 

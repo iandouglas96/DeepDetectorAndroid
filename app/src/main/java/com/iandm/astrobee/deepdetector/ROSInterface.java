@@ -38,6 +38,7 @@ public class ROSInterface implements NodeMain {
             ChannelBuffer img_data = img_msg.getData();
             int ind = 0;
             try {
+                long startTime = System.nanoTime();
                 //Copy data from image message buffer to Bitmap object for java
                 int[] pixels = new int[img.getHeight()*img.getWidth()];
                 int w = img.getWidth();
@@ -49,7 +50,7 @@ public class ROSInterface implements NodeMain {
                         for (int x = 0; x < w; x++) {
                             img_data.getBytes(ind, bgr, 0, 3);
                             ind += 3;
-                            pixels[y * w + x] = Color.argb(255,
+                            pixels[y * w + x] = Color.rgb(
                                     bgr[2] & 0xff, bgr[1] & 0xff, bgr[0] & 0xff);
                         }
                     }
@@ -58,7 +59,7 @@ public class ROSInterface implements NodeMain {
                         for (int x = 0; x < w; x++) {
                             img_data.getBytes(ind, bgr, 0, 1);
                             ind += 1;
-                            pixels[y * w + x] = Color.argb(255,
+                            pixels[y * w + x] = Color.rgb(
                                     bgr[0] & 0xff, bgr[0] & 0xff, bgr[0] & 0xff);
                         }
                     }
@@ -67,6 +68,8 @@ public class ROSInterface implements NodeMain {
                     return;
                 }
                 img.setPixels(pixels, 0, w, 0, 0, w, h);
+                long endTime = System.nanoTime();
+                Log.i(DeepDetector.TAG, String.format("Image input proc: %f sec", (endTime-startTime)/1.e9));
 
                 long timeNs = img_msg.getHeader().getStamp().totalNsecs();
                 imgReadyCb.callback(img, timeNs);
@@ -88,8 +91,11 @@ public class ROSInterface implements NodeMain {
         detectionPub.publish(detMsg);
 
         try {
+            long startTime = System.nanoTime();
             sensor_msgs.Image detVizMsg =
                     detections.exportVizROS(connectedNode.getTopicMessageFactory());
+            long endTime = System.nanoTime();
+            Log.i(DeepDetector.TAG, String.format("Output viz proc: %f sec", (endTime-startTime)/1.e9));
             detVizMsg.getHeader().setStamp(stamp);
             detectionVizPub.publish(detVizMsg);
         } catch (IOException e) {
