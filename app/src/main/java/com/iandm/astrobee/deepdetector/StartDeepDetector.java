@@ -56,9 +56,9 @@ public class StartDeepDetector extends StartGuestScienceService {
         deepDetectorService.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startService(deepDetectorService);
 
-        Log.i("deep_det", "Started Detector Service");
+        Log.i(DeepDetector.TAG, "Started Detector Service");
         //Added to verify we are running the version we think we are
-        Log.i("deep_det", "v.0.1-dev");
+        Log.i(DeepDetector.TAG, "v.0.1-dev");
         sendStarted("info");
     }
 
@@ -68,7 +68,7 @@ public class StartDeepDetector extends StartGuestScienceService {
         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         stopService(intent);
 
-        Log.i("deep_det", "Stopped Detector Service");
+        Log.i(DeepDetector.TAG, "Stopped Detector Service");
         sendStopped("info");
         terminate();
     }

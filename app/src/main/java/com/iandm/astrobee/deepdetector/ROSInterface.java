@@ -113,7 +113,7 @@ public class ROSInterface implements NodeMain {
         imgSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav"),
                 sensor_msgs.Image._TYPE);
         imgSub.addMessageListener(imageMessageListener);
-        detectionPub = connectedNode.newPublisher(resolver.resolve("detections"),
+        detectionPub = connectedNode.newPublisher(resolver.resolve("loc/sm/features"),
                 vision_msgs.Detection2DArray._TYPE);
         detectionVizPub = connectedNode.newPublisher(resolver.resolve("detections_viz"),
                 sensor_msgs.Image._TYPE);

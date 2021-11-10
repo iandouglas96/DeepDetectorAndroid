@@ -5,9 +5,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.util.Log;
 
-import com.iandm.astrobee.deepdetector.ml.Detect;
-import com.iandm.astrobee.deepdetector.ml.IssModel;
+import com.iandm.astrobee.deepdetector.ml.IssModelSmall;
 
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.ros.internal.message.MessageBuffers;
@@ -26,8 +26,18 @@ import vision_msgs.ObjectHypothesisWithPose;
 public class DetectionSet {
     private static final int[] PALETTE = {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN,
         Color.MAGENTA, Color.YELLOW};
-    private static int nextPaletteInd = 0;
     private static final Hashtable<String, Integer> paletteLut = new Hashtable<>();
+
+    static {
+        paletteLut.put("Laptop", 0);
+        paletteLut.put("Camera", 1);
+        paletteLut.put("Handrail", 2);
+        paletteLut.put("Light", 3);
+        paletteLut.put("Window", 4);
+        paletteLut.put("Hatch", 5);
+        paletteLut.put("Express", 6);
+        paletteLut.put("Vent", 7);
+    }
 
     private class Detection {
         public RectF boundingBox;
@@ -57,39 +67,48 @@ public class DetectionSet {
     private final List<Detection> detectionsFiltered;
     private final Bitmap annotatedImg;
 
-    public DetectionSet(List<IssModel.DetectionResult> detections, Bitmap img) {
+    public DetectionSet(List<IssModelSmall.DetectionResult> detections, Bitmap img) {
         annotatedImg = img.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(annotatedImg);
         detectionsFiltered = new ArrayList<>();
 
-        for (IssModel.DetectionResult d : detections) {
+        for (IssModelSmall.DetectionResult d : detections) {
             RectF location = d.getLocationAsRectF();
+            RectF ros_location = new RectF();
             String category = d.getCategoryAsString();
             float score = d.getScoreAsFloat();
 
-            if (score > 0.5 && (location.bottom-location.top)*(location.right-location.left) > 50) {
-                //Rescale
-                location.bottom *= img.getHeight()/448.;
-                location.top *= img.getHeight()/448.;
-                location.left *= img.getWidth()/448.;
-                location.right *= img.getWidth()/448.;
-
+            if (score > 0.3 && (location.bottom-location.top)*(location.right-location.left) > 50) {
                 if (paletteLut.get(category) == null) {
-                    paletteLut.put(category, nextPaletteInd);
-                    nextPaletteInd++;
+                    Log.e(DeepDetector.TAG, "Detector outputted class that doesn't exist.");
+                    continue;
                 }
+
+                //Rescale
+                location.bottom *= img.getHeight()/320.;
+                location.top *= img.getHeight()/320.;
+                location.left *= img.getWidth()/320.;
+                location.right *= img.getWidth()/320.;
+
                 int color = PALETTE[paletteLut.get(category) % PALETTE.length];
 
-                detectionsFiltered.add(new Detection(location, category, score));
+                //Center detection for ROS
+                ros_location.set(location);
+                ros_location.bottom -= img.getHeight()/2.;
+                ros_location.top -= img.getHeight()/2.;
+                ros_location.left -= img.getWidth()/2.;
+                ros_location.right -= img.getWidth()/2.;
+
+                detectionsFiltered.add(new Detection(ros_location, category, score));
 
                 Paint paint = new Paint();
                 paint.setColor(color);
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(2);
-                paint.setTextSize(30);
+                paint.setTextSize(20);
                 canvas.drawRect(location, paint);
                 paint.setStyle(Paint.Style.FILL);
-                canvas.drawText(category, location.left, location.top, paint);
+                canvas.drawText(category, location.left, location.bottom, paint);
             }
         }
     }
