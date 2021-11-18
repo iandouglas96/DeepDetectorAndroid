@@ -19,14 +19,16 @@ import org.ros.message.MessageListener;
 
 import java.io.IOException;
 
+import sensor_msgs.CameraInfo;
 import vision_msgs.Detection2DArray;
 
 public class ROSInterface implements NodeMain {
     private ConnectedNode connectedNode;
     private Subscriber<sensor_msgs.Image> imgSub;
+    private Subscriber<sensor_msgs.CameraInfo> camInfoSub;
     private Publisher<vision_msgs.Detection2DArray> detectionPub;
     private Publisher<sensor_msgs.Image> detectionVizPub;
-    private DeepDetectorCallback imgReadyCb;
+    private DeepDetectorCallback detectorCb;
 
     private MessageListener<sensor_msgs.Image> imageMessageListener =
             new MessageListener<sensor_msgs.Image>() {
@@ -67,7 +69,7 @@ public class ROSInterface implements NodeMain {
                 Log.i(DeepDetector.TAG, String.format("Image input proc: %f sec", (endTime-startTime)/1.e9));
 
                 long timeNs = img_msg.getHeader().getStamp().totalNsecs();
-                imgReadyCb.callback(img, timeNs);
+                detectorCb.imgCallback(img, timeNs);
             }
             catch (IndexOutOfBoundsException e) {
                 Log.i(DeepDetector.TAG, "Mismatch in expected image data");
@@ -75,8 +77,17 @@ public class ROSInterface implements NodeMain {
         }
     };
 
+    private MessageListener<sensor_msgs.CameraInfo> cameraInfoListener =
+            new MessageListener<sensor_msgs.CameraInfo>() {
+        @Override
+        public void onNewMessage(CameraInfo cameraInfo) {
+            detectorCb.camInfoCallback(cameraInfo.getWidth(), cameraInfo.getHeight(),
+                    cameraInfo.getK(), cameraInfo.getDistortionModel(), cameraInfo.getD());
+        }
+    };
+
     public ROSInterface(DeepDetectorCallback cb) {
-        imgReadyCb = cb;
+        detectorCb = cb;
     }
 
     public void publishDetections(DetectionSet detections, long timeNs) {
@@ -113,6 +124,9 @@ public class ROSInterface implements NodeMain {
         imgSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav"),
                 sensor_msgs.Image._TYPE);
         imgSub.addMessageListener(imageMessageListener);
+        camInfoSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav/camera_info"),
+                sensor_msgs.CameraInfo._TYPE);
+        camInfoSub.addMessageListener(cameraInfoListener);
         detectionPub = connectedNode.newPublisher(resolver.resolve("loc/sm/features"),
                 vision_msgs.Detection2DArray._TYPE);
         detectionVizPub = connectedNode.newPublisher(resolver.resolve("detections_viz"),

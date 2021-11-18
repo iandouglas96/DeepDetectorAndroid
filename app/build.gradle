@@ -47,4 +47,5 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-support:0.1.0-rc1'
     implementation 'org.tensorflow:tensorflow-lite-metadata:0.1.0-rc1'
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.3.0'
+    implementation project(path: ':opencv')
 }

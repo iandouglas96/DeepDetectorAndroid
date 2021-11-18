@@ -26,8 +26,11 @@ import org.ros.node.NodeMainExecutor;
 
 import java.net.URI;
 
+import com.iandm.astrobee.deepdetector.Undistorter;
+
 interface DeepDetectorCallback {
-    void callback(Bitmap img, long timeNs);
+    void imgCallback(Bitmap img, long timeNs);
+    void camInfoCallback(int w, int h, double[] K, String dist_type, double[] D);
 }
 
 public class DeepDetector extends Service {
@@ -36,6 +39,7 @@ public class DeepDetector extends Service {
     public ROSInterface rosInterface = null;
 
     private TFLiteObjectDetector detector;
+    private Undistorter undistorter;
 
     private boolean doInfer = true;
 
@@ -53,15 +57,25 @@ public class DeepDetector extends Service {
 
     private final DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
         @Override
-        public void callback(Bitmap img, long timeNs) {
-            if (doInfer) {
+        public void imgCallback(Bitmap img, long timeNs) {
+            if (doInfer && undistorter.isHaveCalib()) {
                 long startTime = System.nanoTime();
-                DetectionSet detectionSet = detector.Infer(img);
+                Bitmap undist_img = undistorter.undistort(img);
                 long endTime = System.nanoTime();
+                Log.i(DeepDetector.TAG, String.format("Undist proc: %f sec", (endTime - startTime) / 1.e9));
+
+                startTime = System.nanoTime();
+                DetectionSet detectionSet = detector.Infer(undist_img);
+                endTime = System.nanoTime();
                 Log.i(DeepDetector.TAG, String.format("Inference proc: %f sec", (endTime - startTime) / 1.e9));
 
                 rosInterface.publishDetections(detectionSet, timeNs);
             }
+        }
+
+        @Override
+        public void camInfoCallback(int w, int h, double[] K, String dist_type, double[] D) {
+            undistorter.setCalib(w, h, K, dist_type, D);
         }
     };
 
@@ -84,9 +98,13 @@ public class DeepDetector extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
         //Initialize model
         detector = new TFLiteObjectDetector(this);
+        undistorter = new Undistorter();
+
+        double[] K = {608.807, 0, 632.536, 0, 607.614, 549.084, 0, 0, 1};
+        double[] D = {0.998693};
+        undistorter.setCalib(1280, 960, K, "fov", D);
 
         registerReceiver(processTurnOnDetection, new IntentFilter(TURN_ON_DETECTOR));
         registerReceiver(processTurnOffDetection, new IntentFilter(TURN_OFF_DETECTOR));
