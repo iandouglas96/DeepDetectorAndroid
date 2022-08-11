@@ -35,6 +35,18 @@ public class ROSInterface implements NodeMain {
         @Override
         public void onNewMessage(sensor_msgs.Image img_msg) {
             Log.i(DeepDetector.TAG, "Image Received");
+            try {
+                if (img_msg.getHeader().getStamp().totalNsecs() + 1e9 <
+                        connectedNode.getCurrentTime().totalNsecs()) {
+                    Log.i(DeepDetector.TAG, "Ignoring Old Image");
+                    return;
+                }
+            }
+            catch (NullPointerException e) {
+                Log.i(DeepDetector.TAG, "Node not yet initialized with time");
+                return;
+            }
+
             Bitmap img = Bitmap.createBitmap(img_msg.getWidth(),
                     img_msg.getHeight(), Bitmap.Config.ARGB_8888);
             ChannelBuffer img_data = img_msg.getData();
@@ -121,13 +133,13 @@ public class ROSInterface implements NodeMain {
 
         this.connectedNode = connectedNode;
         NameResolver resolver = connectedNode.getResolver();
-        imgSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav"),
+        imgSub = connectedNode.newSubscriber(resolver.resolve("/hw/cam_nav/throttle"),
                 sensor_msgs.Image._TYPE);
         imgSub.addMessageListener(imageMessageListener);
-        camInfoSub = connectedNode.newSubscriber(resolver.resolve("hw/cam_nav/camera_info"),
+        camInfoSub = connectedNode.newSubscriber(resolver.resolve("/hw/cam_nav/camera_info"),
                 sensor_msgs.CameraInfo._TYPE);
         camInfoSub.addMessageListener(cameraInfoListener);
-        detectionPub = connectedNode.newPublisher(resolver.resolve("loc/sm/features"),
+        detectionPub = connectedNode.newPublisher(resolver.resolve("/loc/sm/features"),
                 vision_msgs.Detection2DArray._TYPE);
         detectionVizPub = connectedNode.newPublisher(resolver.resolve("detections_viz"),
                 sensor_msgs.Image._TYPE);

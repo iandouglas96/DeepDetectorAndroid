@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.Log;
 
-import com.iandm.astrobee.deepdetector.ml.IssModelSmall;
+import com.iandm.astrobee.deepdetector.ml.GraniteModelSmall;
 
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.ros.internal.message.MessageBuffers;
@@ -29,6 +29,7 @@ public class DetectionSet {
     private static final Hashtable<String, Integer> paletteLut = new Hashtable<>();
 
     static {
+        // ISS Classes
         paletteLut.put("Laptop", 0);
         paletteLut.put("Camera", 1);
         paletteLut.put("Handrail", 2);
@@ -37,6 +38,15 @@ public class DetectionSet {
         paletteLut.put("Hatch", 5);
         paletteLut.put("Express", 6);
         paletteLut.put("Vent", 7);
+        // Granite Classes
+        paletteLut.put("black_panel_large", 0);
+        paletteLut.put("checkerboard", 1);
+        paletteLut.put("vent", 2);
+        paletteLut.put("black_panel_small", 3);
+        paletteLut.put("corner_panel", 4);
+        paletteLut.put("ar_tag", 5);
+        paletteLut.put("larger_ar_tag", 6);
+        paletteLut.put("dock", 7);
     }
 
     private class Detection {
@@ -67,12 +77,12 @@ public class DetectionSet {
     private final List<Detection> detectionsFiltered;
     private final Bitmap annotatedImg;
 
-    public DetectionSet(List<IssModelSmall.DetectionResult> detections, Bitmap img) {
+    public DetectionSet(List<GraniteModelSmall.DetectionResult> detections, Bitmap img) {
         annotatedImg = img.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(annotatedImg);
         detectionsFiltered = new ArrayList<>();
 
-        for (IssModelSmall.DetectionResult d : detections) {
+        for (GraniteModelSmall.DetectionResult d : detections) {
             RectF location = d.getLocationAsRectF();
             RectF ros_location = new RectF();
             String category = d.getCategoryAsString();

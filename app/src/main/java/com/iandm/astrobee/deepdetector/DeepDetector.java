@@ -102,8 +102,12 @@ public class DeepDetector extends Service {
         detector = new TFLiteObjectDetector(this);
         undistorter = new Undistorter();
 
-        double[] K = {608.807, 0, 632.536, 0, 607.614, 549.084, 0, 0, 1};
-        double[] D = {0.998693};
+        //Bsharp
+        double[] K = {603.78877, 0, 575.92329, 0, 602.11334, 495.30887, 0, 0, 1};
+        double[] D = {0.993591};
+        //Bumble
+        //double[] K = {608.807, 0, 632.536, 0, 607.614, 549.084, 0, 0, 1};
+        //double[] D = {0.998693};
         undistorter.setCalib(1280, 960, K, "fov", D);
 
         registerReceiver(processTurnOnDetection, new IntentFilter(TURN_ON_DETECTOR));
