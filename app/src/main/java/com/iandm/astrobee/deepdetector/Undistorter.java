@@ -99,9 +99,16 @@ public class Undistorter {
         return haveCalib && haveCv;
     }
 
-    public Bitmap undistort(Bitmap dist_img) {
+    public Bitmap undistort(Bitmap dist_img, boolean debayer) {
         Mat mat = new Mat();
         Utils.bitmapToMat(dist_img, mat);
+
+        if (debayer) {
+            // Make single-channel
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
+            // Debayer
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BayerGB2RGB);
+        }
 
         // Actually do the undistortion
         Imgproc.remap(mat, mat, mapX, mapY, Imgproc.INTER_LINEAR);
@@ -109,6 +116,7 @@ public class Undistorter {
         Bitmap undist_img = Bitmap.createBitmap(mat.cols(),
                 mat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(mat, undist_img);
+        mat.release();
         return undist_img;
     }
 }

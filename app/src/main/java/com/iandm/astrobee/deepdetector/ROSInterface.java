@@ -65,7 +65,7 @@ public class ROSInterface implements NodeMain {
                         pixels[ind] = Color.rgb(
                                 byte_buf[byte_ind+2] & 0xff, byte_buf[byte_ind+1] & 0xff, byte_buf[byte_ind] & 0xff);
                     }
-                } else if (img_msg.getEncoding().equals("mono8")) {
+                } else if (img_msg.getEncoding().equals("mono8") || img_msg.getEncoding().equals("bayer_grbg8")) {
                     byte[] byte_buf = new byte[pixels.length];
                     img_data.getBytes(0, byte_buf, 0, byte_buf.length);
                     for (int ind=0; ind<pixels.length; ind++) {
@@ -81,7 +81,7 @@ public class ROSInterface implements NodeMain {
                 Log.i(DeepDetector.TAG, String.format("Image input proc: %f sec", (endTime-startTime)/1.e9));
 
                 long timeNs = img_msg.getHeader().getStamp().totalNsecs();
-                detectorCb.imgCallback(img, timeNs);
+                detectorCb.imgCallback(img, timeNs, img_msg.getEncoding().equals("bayer_grbg8"));
             }
             catch (IndexOutOfBoundsException e) {
                 Log.i(DeepDetector.TAG, "Mismatch in expected image data");
@@ -133,7 +133,7 @@ public class ROSInterface implements NodeMain {
 
         this.connectedNode = connectedNode;
         NameResolver resolver = connectedNode.getResolver();
-        imgSub = connectedNode.newSubscriber(resolver.resolve("/hw/cam_nav/throttle"),
+        imgSub = connectedNode.newSubscriber(resolver.resolve("/hw/cam_nav_bayer"),
                 sensor_msgs.Image._TYPE);
         imgSub.addMessageListener(imageMessageListener);
         camInfoSub = connectedNode.newSubscriber(resolver.resolve("/hw/cam_nav/camera_info"),

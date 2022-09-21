@@ -29,7 +29,7 @@ import java.net.URI;
 import com.iandm.astrobee.deepdetector.Undistorter;
 
 interface DeepDetectorCallback {
-    void imgCallback(Bitmap img, long timeNs);
+    void imgCallback(Bitmap img, long timeNs, boolean debayer);
     void camInfoCallback(int w, int h, double[] K, String dist_type, double[] D);
 }
 
@@ -57,10 +57,10 @@ public class DeepDetector extends Service {
 
     private final DeepDetectorCallback imageReadyCb = new DeepDetectorCallback() {
         @Override
-        public void imgCallback(Bitmap img, long timeNs) {
+        public void imgCallback(Bitmap img, long timeNs, boolean debayer) {
             if (doInfer && undistorter.isHaveCalib()) {
                 long startTime = System.nanoTime();
-                Bitmap undist_img = undistorter.undistort(img);
+                Bitmap undist_img = undistorter.undistort(img, debayer);
                 long endTime = System.nanoTime();
                 Log.i(DeepDetector.TAG, String.format("Undist proc: %f sec", (endTime - startTime) / 1.e9));
 
@@ -102,13 +102,14 @@ public class DeepDetector extends Service {
         detector = new TFLiteObjectDetector(this);
         undistorter = new Undistorter();
 
+        /* Manually set calib, but better to use camera_info topic */
         //Bsharp
-        double[] K = {603.78877, 0, 575.92329, 0, 602.11334, 495.30887, 0, 0, 1};
-        double[] D = {0.993591};
+        //double[] K = {603.78877, 0, 575.92329, 0, 602.11334, 495.30887, 0, 0, 1};
+        //double[] D = {0.993591};
         //Bumble
         //double[] K = {608.807, 0, 632.536, 0, 607.614, 549.084, 0, 0, 1};
         //double[] D = {0.998693};
-        undistorter.setCalib(1280, 960, K, "fov", D);
+        //undistorter.setCalib(1280, 960, K, "fov", D);
 
         registerReceiver(processTurnOnDetection, new IntentFilter(TURN_ON_DETECTOR));
         registerReceiver(processTurnOffDetection, new IntentFilter(TURN_OFF_DETECTOR));

@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.Log;
 
-import com.iandm.astrobee.deepdetector.ml.GraniteModelSmall;
+import com.iandm.astrobee.deepdetector.ml.IssColorModel;
 
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.ros.internal.message.MessageBuffers;
@@ -31,22 +31,19 @@ public class DetectionSet {
     static {
         // ISS Classes
         paletteLut.put("Laptop", 0);
-        paletteLut.put("Camera", 1);
+        paletteLut.put("Express", 1);
         paletteLut.put("Handrail", 2);
         paletteLut.put("Light", 3);
-        paletteLut.put("Window", 4);
-        paletteLut.put("Hatch", 5);
-        paletteLut.put("Express", 6);
-        paletteLut.put("Vent", 7);
+        paletteLut.put("Vent", 4);
+        paletteLut.put("Window", 5);
         // Granite Classes
-        paletteLut.put("black_panel_large", 0);
-        paletteLut.put("checkerboard", 1);
-        paletteLut.put("vent", 2);
-        paletteLut.put("black_panel_small", 3);
-        paletteLut.put("corner_panel", 4);
-        paletteLut.put("ar_tag", 5);
-        paletteLut.put("larger_ar_tag", 6);
-        paletteLut.put("dock", 7);
+        paletteLut.put("triangle_box", 0);
+        paletteLut.put("corner_panel", 1);
+        paletteLut.put("ar_tag", 2);
+        paletteLut.put("handrail", 3);
+        paletteLut.put("vent", 4);
+        paletteLut.put("black_panel_small", 5);
+        paletteLut.put("dock", 6);
     }
 
     private class Detection {
@@ -77,12 +74,12 @@ public class DetectionSet {
     private final List<Detection> detectionsFiltered;
     private final Bitmap annotatedImg;
 
-    public DetectionSet(List<GraniteModelSmall.DetectionResult> detections, Bitmap img) {
+    public DetectionSet(List<IssColorModel.DetectionResult> detections, Bitmap img) {
         annotatedImg = img.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(annotatedImg);
         detectionsFiltered = new ArrayList<>();
 
-        for (GraniteModelSmall.DetectionResult d : detections) {
+        for (IssColorModel.DetectionResult d : detections) {
             RectF location = d.getLocationAsRectF();
             RectF ros_location = new RectF();
             String category = d.getCategoryAsString();
@@ -152,9 +149,9 @@ public class DetectionSet {
         byte[] imgBytes = new byte[3*h*w];
 
         for (int ind=0; ind<pixels.length; ind++) {
-            imgBytes[3*ind] = (byte)(pixels[ind] & 0xff);
-            imgBytes[3*ind+1] = (byte)((pixels[ind] >> 8) & 0xff);
-            imgBytes[3*ind+2] = (byte)((pixels[ind] >> 16) & 0xff);
+            imgBytes[3*ind] = (byte)(pixels[ind] & 0xff); //B
+            imgBytes[3*ind+1] = (byte)((pixels[ind] >> 8) & 0xff); //G
+            imgBytes[3*ind+2] = (byte)((pixels[ind] >> 16) & 0xff); //R
         }
 
         ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());

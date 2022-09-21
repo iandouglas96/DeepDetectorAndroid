@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.util.Log;
 
-import com.iandm.astrobee.deepdetector.ml.GraniteModelSmall;
+import com.iandm.astrobee.deepdetector.ml.IssColorModel;
 
 import org.tensorflow.lite.support.image.TensorImage;
 import org.tensorflow.lite.support.model.Model;
@@ -15,7 +15,7 @@ import org.tensorflow.lite.gpu.GpuDelegate;
 import java.io.IOException;
 
 public class TFLiteObjectDetector {
-    GraniteModelSmall model;
+    IssColorModel model;
 
     public TFLiteObjectDetector(Context context) {
         Model.Options options;
@@ -30,7 +30,7 @@ public class TFLiteObjectDetector {
         }
 
         try {
-            model = GraniteModelSmall.newInstance(context, options);
+            model = IssColorModel.newInstance(context, options);
         } catch (IOException e) {
             Log.i(DeepDetector.TAG, "Error creating TFLite model");
         }
@@ -39,7 +39,7 @@ public class TFLiteObjectDetector {
     public DetectionSet Infer(Bitmap img) {
         Bitmap scaledImg = Bitmap.createScaledBitmap(img, 320, 320, true);
         TensorImage tfImg = TensorImage.fromBitmap(scaledImg);
-        GraniteModelSmall.Outputs outputs = model.process(tfImg);
+        IssColorModel.Outputs outputs = model.process(tfImg);
 
         return new DetectionSet(outputs.getDetectionResultList(), img);
     }
